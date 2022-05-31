@@ -1,0 +1,11 @@
+venv/
+
+.DS_Store
+
+playground.py
+
+results.csv
+results2.csv
+results.pdf
+results2.pdf
+sample.xlsx
