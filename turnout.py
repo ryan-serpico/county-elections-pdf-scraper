@@ -5,9 +5,10 @@ import pandas as pd
 import pdfplumber
 
 precinct_re = re.compile(r'\d{4}')
-results_re = re.compile(r'(\d+) (\d+\.\d\d%) (\d+) (\d+) (\d+)')
+# results_re = re.compile(r'(\d+) (\d+\.\d\d%) (\d+) (\d+) (\d+)')
+results_re = re.compile(r'(\d+) (\d+) (\d+) (\d+)')
 fullName_re = re.compile(r'([A-Za-z-". ]+)')
-electionRace = re.compile(r'^For .+')
+voter_turnout_re = re.compile(r'(Voter Turnout - Total) (\d+\.\d\d%)')
 
 raceName = None
 votePercentage = None
@@ -20,33 +21,32 @@ def get_results(text):
     for i, line in enumerate(text.split('\n')):
         if 'Vote For 1' in line:
             raceName = text.split('\n')[i-1]
-        
+
         if precinct_re.match(line):
             precinct = line[0:4]
 
-        if (results_re.search(line) and 'Total Votes' not in line):
-            name = fullName_re.search(line).group(1)
-            votePercentage = results_re.search(str(line)).group(2)
+
+        match = voter_turnout_re.search(line)
+        if match:
+            # print(precinct)
+            # print(match.group(2))
             resultsList.append(
                 {
                     'precinct': precinct,
-                    'raceName': raceName,
-                    'name': name,
-                    'votePercentage': votePercentage
+                    'turnoutPerc': match.group(2),
                 }
             )
 
-with pdfplumber.open(os.path.join(os.getcwd(), 'source_pdfs/fall_2022_bexar_precinct_results.pdf')) as pdf:
+with pdfplumber.open(os.path.join(os.getcwd(), 'source_pdfs/may_7.pdf')) as pdf:
     for page in pdf.pages:
         print(page)
         try:
             get_results(page.extract_text())
         except:
-            print('🚨 error 🚨')
             pass
 
 
 df = pd.DataFrame(resultsList)
-df.to_csv('data/2022_general.csv', index=False)
+df.to_csv('data/may_7_turnout.csv', index=False)
 print(df)
 
